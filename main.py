@@ -4,15 +4,6 @@ from routes import chat_routes
 
 app = FastAPI(title="Chat API")
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Include chat routes
 app.include_router(chat_routes.router, tags=["chats"])
 
@@ -22,4 +13,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
