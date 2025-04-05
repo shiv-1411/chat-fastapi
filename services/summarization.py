@@ -7,12 +7,36 @@ load_dotenv()
 
 class SummarizationService:
     def __init__(self):
-        # Set the API key directly on the openai module
+        """Initialize OpenAI client"""
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        if not openai.api_key:
-            raise ValueError("OpenAI API key not found in environment variables")
 
-    async def generate_summary(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def generate_summary(self, messages):
+        """Generate a summary of the chat messages using OpenAI"""
+        if not messages:
+            return "No messages to summarize"
+
+        # Format messages for the prompt
+        formatted_messages = "\n".join([
+            f"{msg['user_id']}: {msg['message']}"
+            for msg in messages
+        ])
+
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that summarizes conversations."},
+                    {"role": "user", "content": f"Please summarize this conversation:\n{formatted_messages}"}
+                ],
+                max_tokens=150,
+                temperature=0.7
+            )
+            return response.choices[0].message['content'].strip()
+        except Exception as e:
+            print(f"Error generating summary: {str(e)}")
+            return "Error generating summary"
+
+    async def generate_summary_old(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Generate a summary of the chat conversation using OpenAI's GPT model.
         

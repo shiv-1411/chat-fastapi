@@ -1,54 +1,58 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import chat_routes
-import uvicorn
-import os
+import logging
+from config.database import Database
+from routes import chat_routes, summary_routes
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Chat API",
-    description="REST API for managing chat messages",
+    description="A simple chat API with MongoDB storage and GPT-3.5 summarization",
     version="1.0.0"
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include chat routes
-app.include_router(
-    chat_routes.router,
-    prefix="/api/v1",  # Adding version prefix
-    tags=["chats"]
-)
+app.include_router(chat_routes.router, prefix="/api/v1", tags=["chats"])
+app.include_router(summary_routes.router, prefix="/api/v1", tags=["summaries"])
+
+@app.on_event("startup")
+async def startup_event():
+    try:
+        await Database.connect_db()
+        logger.info("Application startup completed successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize application: {str(e)}")
+        raise
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    try:
+        await Database.close_db()
+        logger.info("Application shutdown completed successfully")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {str(e)}")
 
 @app.get("/")
-def root():
-    """API root endpoint"""
+async def root():
     return {
-        "message": "Chat API is running",
+        "message": "Welcome to the Chat API",
         "version": "1.0.0",
-        "docs_url": "/docs",
-        "endpoints": {
-            "store_chat": "POST /api/v1/chats",
-            "get_conversation": "GET /api/v1/chats/{conversation_id}",
-            "get_user_chats": "GET /api/v1/users/{user_id}/chats",
-            "delete_conversation": "DELETE /api/v1/chats/{conversation_id}"
-        }
+        "status": "running",
+        "features": ["chat", "summarization"]
     }
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True  # Enable auto-reload during development
-    )

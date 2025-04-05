@@ -2,6 +2,22 @@
 
 A FastAPI-based chat application with OpenAI-powered conversation summarization.
 
+## Environment Setup
+
+1. Copy `.env.example` to create your own `.env` file:
+```bash
+cp .env.example .env
+```
+
+2. Add your own values in `.env`:
+```
+OPENAI_API_KEY=your_api_key_here  # Get from OpenAI dashboard
+MONGODB_URL=your_mongodb_url_here  # Your MongoDB connection string
+PORT=8080
+```
+
+⚠️ IMPORTANT: Never commit your `.env` file or share your API keys!
+
 ## Features
 - Create and manage chat messages
 - Retrieve user-specific chat history
